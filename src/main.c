@@ -5,52 +5,7 @@
 #include <util/delay.h>
 #include <stddef.h>
 
-#define DISPLAY_DDR        DDRD
-#define DISPLAY_PORT       PORTD
-#define DISPLAY_DATA_PIN   2
-#define DISPLAY_CLOCK_PIN  3
-#define DISPLAY_ENABLE_PIN 4
-
-const uint8_t display_lookup[10] = {
-    0xc0, 0xf9, 0xa4, 0xb0, 0x99,
-    0x92, 0x82, 0xf8, 0x80, 0x90
-};
-
-void display_init()
-{
-    DISPLAY_DDR |= (1 << DISPLAY_CLOCK_PIN) | (1 << DISPLAY_DATA_PIN) | (1 << DISPLAY_ENABLE_PIN);
-    DISPLAY_PORT &= ~(1 << DISPLAY_CLOCK_PIN | 1 << DISPLAY_ENABLE_PIN);
-}
-
-void display_send(uint8_t bits)
-{
-    //for (size_t i = 0; i < 8; i++)
-    for (int i = 7; i >= 0; i--)
-    {
-        DISPLAY_PORT &= ~(1 << DISPLAY_DATA_PIN);
-        DISPLAY_PORT |= ((bits >> i) & 1)  << DISPLAY_DATA_PIN;
-        DISPLAY_PORT |= 1 << DISPLAY_CLOCK_PIN;
-        DISPLAY_PORT &= ~(1 << DISPLAY_CLOCK_PIN);
-    }
-}
-
-void display_number(int number)
-{
-    int t = (number / 10) % 10;
-    display_send(display_lookup[number % 10]);
-    display_send(t != 0 ? display_lookup[t] : 0xFF);
-
-    DISPLAY_PORT &= ~(1 << DISPLAY_ENABLE_PIN);
-    DISPLAY_PORT |= 1 << DISPLAY_ENABLE_PIN;
-}
-
-void display_clear()
-{
-    display_send(0xFF);
-    display_send(0xFF);
-    DISPLAY_PORT &= ~(1 << DISPLAY_ENABLE_PIN);
-    DISPLAY_PORT |= 1 << DISPLAY_ENABLE_PIN;
-}
+#include "display.h"
 
 int main()
 {
@@ -58,20 +13,37 @@ int main()
     display_clear();
 
     int i = 0;
+
+
+    uint8_t curr_mask = 1;
+    while (true)
+    {
+        display_send(~curr_mask);
+        display_send(~curr_mask);
+        display_show();
+        _delay_ms(100);
+        curr_mask = ((curr_mask << 1) & 0b111111) | ((curr_mask >> 5) & 1);
+    }
+
+
     while(true)
     {
-        if (i % 2 == 0)
-        {
-            display_number(i);
-        }
-        else
-        {
-            display_clear();
-        }
-        
-        _delay_ms(200);
+        display_show_number(i);
+        _delay_ms(1000);
         i++;
-        if (i == 100) i = 0;
+        if (i == 100)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                display_send(0b00001001); // P
+                display_send(0b00001100); // H
+                display_show();
+                _delay_ms(500);
+                display_clear();
+                _delay_ms(500);
+            }
+            i = 0;
+        }
     }
 
     return 0;
