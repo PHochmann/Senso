@@ -46,8 +46,8 @@ void display_number(int number)
 
 void display_clear()
 {
-    display_send(0b10101010);
-    display_send(0);
+    display_send(0xFF);
+    display_send(0xFF);
     DISPLAY_PORT &= ~(1 << DISPLAY_ENABLE_PIN);
     DISPLAY_PORT |= 1 << DISPLAY_ENABLE_PIN;
 }
@@ -60,7 +60,15 @@ int main()
     int i = 0;
     while(true)
     {
-        display_number(i);
+        if (i % 2 == 0)
+        {
+            display_number(i);
+        }
+        else
+        {
+            display_clear();
+        }
+        
         _delay_ms(200);
         i++;
         if (i == 100) i = 0;
