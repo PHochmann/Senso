@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+extern const uint8_t display_lookup[10];
+
 // Normal use
 void display_init();
 void display_show_number(uint8_t number);

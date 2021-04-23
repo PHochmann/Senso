@@ -24,12 +24,18 @@ const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
 #define BUTTON_PIN  PIND
 const uint8_t buttons[NUM_BUTTONS] = { 7, 6, 5, 4 };
 
-const uint16_t notes[NUM_BUTTONS] = { NOTE_E7, NOTE_C7, NOTE_F4, NOTE_D6 };
+const uint16_t button_notes[NUM_BUTTONS] = { NOTE_E7, NOTE_C7, NOTE_F4, NOTE_D6 };
+
 #define BEGIN_LENGTH 12
 const uint16_t begin_notes[BEGIN_LENGTH] = {
     NOTE_E7, NOTE_E7, 0, NOTE_E7,
     0, NOTE_C7, NOTE_E7, 0,
     NOTE_G7, 0, 0,  0 };
+
+#define LOSE_LENGTH 10
+const uint16_t lose_notes[LOSE_LENGTH] = {
+    NOTE_FS4, 0, NOTE_A4, NOTE_CS5, 0, NOTE_A4, 0, NOTE_FS4,
+    NOTE_D4, NOTE_D4 };
 
 uint8_t led_mask;
 uint8_t button_mask;
@@ -59,20 +65,44 @@ bool is_input()
 
 void play_begin_animation()
 {
-    // Show game begin animation
-    uint8_t curr_mask = 1;
+    uint8_t curr_display_mask = 1;
     uint8_t curr_led_mask = led_mask ^ 0b10101010;
-    for (size_t i = 0; i < 12; i++)
+    for (size_t i = 0; i < BEGIN_LENGTH; i++)
     {
-        display_send(~curr_mask);
-        display_send(~curr_mask);
+        display_send(~curr_display_mask);
+        display_send(~curr_display_mask);
         display_show();
-        play_freq(begin_notes[i]);
         LED_PORT |= led_mask;
         LED_PORT &= ~(curr_led_mask & led_mask);
+        play_freq(begin_notes[i]);
+
+        if (i % 2 == 0) curr_led_mask ^= led_mask;
+        curr_display_mask = ((curr_display_mask << 1) & 0b111111) | ((curr_display_mask >> 5) & 1);
         _delay_ms(150);
-        curr_led_mask ^= led_mask;
-        curr_mask = ((curr_mask << 1) & 0b111111) | ((curr_mask >> 5) & 1);
+    }
+    LED_PORT |= led_mask;
+    silent();
+    display_clear();
+    _delay_ms(1500);
+}
+
+void play_lose_animation()
+{
+    uint8_t curr_display_mask = 0b11001100;
+    uint8_t curr_led_mask = led_mask;
+
+    for (size_t i = 0; i < LOSE_LENGTH; i++)
+    {
+        display_send(curr_display_mask);
+        display_send(curr_display_mask);
+        display_show();
+        LED_PORT |= led_mask;
+        LED_PORT &= ~(curr_led_mask & led_mask);
+        play_freq(lose_notes[i]);
+
+        curr_display_mask = ~(curr_display_mask >> 1);
+        if (i % 2 == 0) curr_led_mask <<= 1;
+        _delay_ms(170);
     }
     LED_PORT |= led_mask;
     silent();
@@ -105,7 +135,7 @@ uint8_t play_game(int seed)
         for (size_t j = 0; j <= i; j++)
         {
             LED_PORT &= ~(1 << LEDs[seq[j]]);
-            play_freq(notes[seq[j]]);
+            play_freq(button_notes[seq[j]]);
             _delay_ms(250);
             LED_PORT |= 1 << LEDs[seq[j]];
             silent();
@@ -128,17 +158,18 @@ uint8_t play_game(int seed)
                         {
                             // Wrong button - Game over
                             LED_PORT &= ~(1 << LEDs[seq[j]]);
-                            play_freq(notes[seq[j]]);
+                            play_freq(button_notes[seq[j]]);
                             _delay_ms(1000);
                             LED_PORT |= 1 << LEDs[seq[j]];
                             silent();
+                            play_lose_animation();
                             return i;
                         }
                         else
                         {
                             // Correct button
                             LED_PORT &= ~(1 << LEDs[seq[j]]);
-                            play_freq(notes[seq[j]]);
+                            play_freq(button_notes[seq[j]]);
                             _delay_ms(250);
                             LED_PORT |= 1 << LEDs[seq[j]];
                             silent();
@@ -199,10 +230,10 @@ int main()
         bool start = is_input();
 
         display_show_number(highscore);
-        _delay_ms(400);
+        _delay_ms(500);
         start |= is_input();
         display_clear();
-        _delay_ms(400);
+        _delay_ms(500);
         start |= is_input();
 
         if (start)
