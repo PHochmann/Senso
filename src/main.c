@@ -2,15 +2,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stddef.h>
+
 #include <avr/io.h>
 #include <util/delay.h>
-#include <stddef.h>
+#include <avr/eeprom.h>
 
 #include "display.h"
 #include "buzzer.h"
 
 #define NUM_BUTTONS    4
 #define HIGHEST_SCORE 99
+#define HIGHSCORE_ADDR ((uint8_t*)10)
 
 #define LED_PORT    PORTC
 #define LED_DDR     DDRC
@@ -23,7 +26,6 @@ const uint8_t buttons[NUM_BUTTONS] = { 7, 6, 5, 4 };
 
 const uint16_t notes[NUM_BUTTONS] = { NOTE_E7, NOTE_C7, NOTE_F4, NOTE_D6 };
 #define BEGIN_LENGTH 12
-
 const uint16_t begin_notes[BEGIN_LENGTH] = {
     NOTE_E7, NOTE_E7, 0, NOTE_E7,
     0, NOTE_C7, NOTE_E7, 0,
@@ -31,6 +33,8 @@ const uint16_t begin_notes[BEGIN_LENGTH] = {
 
 uint8_t led_mask;
 uint8_t button_mask;
+
+
 
 void leds_init(uint8_t mask)
 {
@@ -162,6 +166,8 @@ uint8_t play_game(int seed)
 
 int main()
 {
+
+
     display_init();
     buzzer_init();
 
@@ -170,11 +176,24 @@ int main()
     buttons_init(button_mask);
     leds_init(led_mask);
 
+    // Erase highscore if both outer buttons are pressed on startup
+    if (((BUTTON_PIN & button_mask) >> buttons[NUM_BUTTONS - 1]) == 0b0110)
+    {
+        play_freq(440);
+        _delay_ms(2000);
+        silent();
+        if (is_input())
+        {
+            eeprom_write_byte(HIGHSCORE_ADDR, 0);
+            while (is_input());
+        }
+    }
+
     // Start timer to get random values
     TCCR0A = 0;
     TCCR0B = (0 << CS02) | (0 << CS01) | (1 << CS00);
 
-    uint8_t highscore = 0;
+    uint8_t highscore = eeprom_read_byte(HIGHSCORE_ADDR);
     while (true)
     {
         bool start = is_input();
@@ -189,7 +208,11 @@ int main()
         if (start)
         {
             uint8_t score = play_game(TCNT0);
-            if (score > highscore) highscore = score;
+            if (score > highscore)
+            {
+                highscore = score;
+                eeprom_write_byte(HIGHSCORE_ADDR, highscore);
+            }
         }
     }
     

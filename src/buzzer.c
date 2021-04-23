@@ -1,10 +1,13 @@
+#define F_CPU 16000000L
 #include <stdint.h>
 #include <stdlib.h>
 #include <avr/io.h>
 #include "buzzer.h"
 
-#define BUZZER_DDR  DDRD
-#define BUZZER      3
+#define BUZZER_DDR       DDRD
+#define BUZZER           3
+#define PRESCALER        1024
+#define TICKS_PER_SECOND (F_CPU / PRESCALER)
 
 void play_freq(uint16_t freq)
 {
@@ -15,8 +18,8 @@ void play_freq(uint16_t freq)
     }
     else
     {
-        OCR2A = 15625 / freq;
-        OCR2B = 15625 / freq / 2;
+        OCR2A = TICKS_PER_SECOND / freq;
+        OCR2B = TICKS_PER_SECOND / freq / 2;
     }
 }
 
