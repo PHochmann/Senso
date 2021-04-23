@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "display.h"
+#include "buzzer.h"
 
 #define NUM_BUTTONS    4
 #define HIGHEST_SCORE 99
@@ -18,16 +19,18 @@ const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
 #define BUTTON_PORT PORTD
 #define BUTTON_DDR  DDRD
 #define BUTTON_PIN  PIND
-const uint8_t buttons[NUM_BUTTONS] = { 5, 4, 3, 2 };
+const uint8_t buttons[NUM_BUTTONS] = { 7, 6, 5, 4 };
 
-#define BUZZER_DDR  DDRC
-#define BUZZER      4
-#define TONE1       
-#define TONE2
-#define TONE3
-#define TONE4
+const uint16_t notes[NUM_BUTTONS] = { NOTE_E7, NOTE_C7, NOTE_F4, NOTE_D6 };
+#define BEGIN_LENGTH 12
 
-// Buzzer is A4 -> PORTC, Pin 4
+const uint16_t begin_notes[BEGIN_LENGTH] = {
+    NOTE_E7, NOTE_E7, 0, NOTE_E7,
+    0, NOTE_C7, NOTE_E7, 0,
+    NOTE_G7, 0, 0,  0 };
+
+uint8_t led_mask;
+uint8_t button_mask;
 
 void leds_init(uint8_t mask)
 {
@@ -40,14 +43,37 @@ void leds_init(uint8_t mask)
 void buttons_init(uint8_t mask)
 {
     // Input
-    BUTTON_DDR &= ~(mask);
+    BUTTON_DDR &= ~mask;
     // Pull up resistors
     BUTTON_PORT |= mask;
 }
 
-void buzzer_init()
+bool is_input()
 {
+    return (BUTTON_PIN & button_mask) != button_mask;
+}
 
+void play_begin_animation()
+{
+    // Show game begin animation
+    uint8_t curr_mask = 1;
+    uint8_t curr_led_mask = led_mask ^ 0b10101010;
+    for (size_t i = 0; i < 12; i++)
+    {
+        display_send(~curr_mask);
+        display_send(~curr_mask);
+        display_show();
+        play_freq(begin_notes[i]);
+        LED_PORT |= led_mask;
+        LED_PORT &= ~(curr_led_mask & led_mask);
+        _delay_ms(150);
+        curr_led_mask ^= led_mask;
+        curr_mask = ((curr_mask << 1) & 0b111111) | ((curr_mask >> 5) & 1);
+    }
+    LED_PORT |= led_mask;
+    silent();
+    display_clear();
+    _delay_ms(1500);
 }
 
 /*
@@ -55,16 +81,7 @@ Returns: Achieved score
 */
 uint8_t play_game(int seed)
 {
-    // Show game begin animation
-    uint8_t curr_mask = 1;
-    for (size_t i = 0; i < 12; i++)
-    {
-        display_send(~curr_mask);
-        display_send(~curr_mask);
-        display_show();
-        _delay_ms(100);
-        curr_mask = ((curr_mask << 1) & 0b111111) | ((curr_mask >> 5) & 1);
-    }
+    play_begin_animation();
 
     // Initialise score
     display_show_number(0);
@@ -84,8 +101,10 @@ uint8_t play_game(int seed)
         for (size_t j = 0; j <= i; j++)
         {
             LED_PORT &= ~(1 << LEDs[seq[j]]);
+            play_freq(notes[seq[j]]);
             _delay_ms(250);
             LED_PORT |= 1 << LEDs[seq[j]];
+            silent();
             _delay_ms(100);
         }
 
@@ -105,16 +124,20 @@ uint8_t play_game(int seed)
                         {
                             // Wrong button - Game over
                             LED_PORT &= ~(1 << LEDs[seq[j]]);
-                            _delay_ms(500);
+                            play_freq(notes[seq[j]]);
+                            _delay_ms(1000);
                             LED_PORT |= 1 << LEDs[seq[j]];
+                            silent();
                             return i;
                         }
                         else
                         {
                             // Correct button
                             LED_PORT &= ~(1 << LEDs[seq[j]]);
+                            play_freq(notes[seq[j]]);
                             _delay_ms(250);
                             LED_PORT |= 1 << LEDs[seq[j]];
+                            silent();
                             correct = true;
                             break;
                         }
@@ -127,8 +150,12 @@ uint8_t play_game(int seed)
         // Sequence was correct
         // Update score
         display_show_number(i + 1);
+        // Wait until all buttons are released
+        while (is_input());
+        _delay_ms(500);
     }
 
+    play_begin_animation();
     // Game is won!
     return HIGHEST_SCORE;
 }
@@ -136,28 +163,35 @@ uint8_t play_game(int seed)
 int main()
 {
     display_init();
+    buzzer_init();
 
-    const uint8_t led_mask = (1 << LEDs[0]) | (1 << LEDs[1]) | (1 << LEDs[2]) | (1 << LEDs[3]);
-    const uint8_t button_mask = (1 << buttons[0] | 1 << buttons[1] | 1 << buttons[2] | 1 << buttons[3]);
+    led_mask = (1 << LEDs[0]) | (1 << LEDs[1]) | (1 << LEDs[2]) | (1 << LEDs[3]);
+    button_mask = (1 << buttons[0] | 1 << buttons[1] | 1 << buttons[2] | 1 << buttons[3]);
     buttons_init(button_mask);
     leds_init(led_mask);
 
+    // Start timer to get random values
+    TCCR0A = 0;
+    TCCR0B = (0 << CS02) | (0 << CS01) | (1 << CS00);
 
     uint8_t highscore = 0;
-
     while (true)
     {
-        display_show_number(highscore);
-        _delay_ms(200);
-        display_clear();
-        _delay_ms(200);
+        bool start = is_input();
 
-        if ((BUTTON_PIN & button_mask) != button_mask)
+        display_show_number(highscore);
+        _delay_ms(400);
+        start |= is_input();
+        display_clear();
+        _delay_ms(400);
+        start |= is_input();
+
+        if (start)
         {
-            uint8_t score = play_game(0);
+            uint8_t score = play_game(TCNT0);
             if (score > highscore) highscore = score;
         }
     }
-
-    while (true);
+    
+    return 0;
 }
