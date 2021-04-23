@@ -15,6 +15,11 @@
 #define HIGHEST_SCORE 99
 #define HIGHSCORE_ADDR ((uint8_t*)10)
 
+#define NUM_LEVELS 6
+const uint8_t levels[NUM_LEVELS]  = { 0, 5, 10, 20, 30, 50 };
+const uint16_t show_ms[NUM_LEVELS] = { 400, 300, 250, 200, 150, 100 };
+const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 150, 100,  50,  30 };
+
 #define LED_PORT    PORTC
 #define LED_DDR     DDRC
 const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
@@ -63,6 +68,15 @@ bool is_input()
     return (BUTTON_PIN & button_mask) != button_mask;
 }
 
+void my_delay(int ms)
+{
+    while (ms > 0)
+    {  
+        _delay_ms(10);
+        ms -= 10;
+    }
+}
+
 void play_begin_animation()
 {
     uint8_t curr_display_mask = 1;
@@ -88,8 +102,8 @@ void play_begin_animation()
 
 void play_lose_animation()
 {
-    uint8_t curr_display_mask = 0b11001100;
-    uint8_t curr_led_mask = led_mask;
+    uint8_t curr_display_mask = 0b10011111;
+    uint8_t curr_led_mask = 0b00001001;
 
     for (size_t i = 0; i < LOSE_LENGTH; i++)
     {
@@ -100,8 +114,8 @@ void play_lose_animation()
         LED_PORT &= ~(curr_led_mask & led_mask);
         play_freq(lose_notes[i]);
 
-        curr_display_mask = ~(curr_display_mask >> 1);
-        if (i % 2 == 0) curr_led_mask <<= 1;
+        curr_display_mask = (curr_display_mask >> 1) | (1 << 7);
+        if (i % 2 == 0) curr_led_mask ^= 0b00001111;
         _delay_ms(170);
     }
     LED_PORT |= led_mask;
@@ -129,17 +143,27 @@ uint8_t play_game(int seed)
     }
 
     // Check for correct presses
+    uint8_t next_lvl = 0;
+    uint16_t curr_show_ms = 0;
+    uint16_t curr_wait_ms = 0;
     for (size_t i = 0; i < HIGHEST_SCORE; i++)
     {
+        if (levels[next_lvl] == i)
+        {
+            next_lvl++;
+            curr_show_ms = show_ms[next_lvl - 1];
+            curr_wait_ms = wait_ms[next_lvl - 1];
+        }
+
         // Repeat previous sequence
         for (size_t j = 0; j <= i; j++)
         {
             LED_PORT &= ~(1 << LEDs[seq[j]]);
             play_freq(button_notes[seq[j]]);
-            _delay_ms(250);
+            my_delay(curr_show_ms);
             LED_PORT |= 1 << LEDs[seq[j]];
             silent();
-            _delay_ms(100);
+            my_delay(curr_wait_ms);
         }
 
         // Now check if player repeats the sequence
@@ -162,6 +186,7 @@ uint8_t play_game(int seed)
                             _delay_ms(1000);
                             LED_PORT |= 1 << LEDs[seq[j]];
                             silent();
+                            _delay_ms(500);
                             play_lose_animation();
                             return i;
                         }
@@ -190,7 +215,6 @@ uint8_t play_game(int seed)
         _delay_ms(500);
     }
 
-    play_begin_animation();
     // Game is won!
     return HIGHEST_SCORE;
 }
