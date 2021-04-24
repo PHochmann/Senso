@@ -16,7 +16,7 @@
 #define HIGHSCORE_ADDR ((uint8_t*)10)
 
 #define NUM_LEVELS 6
-const uint8_t levels[NUM_LEVELS]  = { 0, 5, 10, 20, 30, 50 };
+const uint8_t levels[NUM_LEVELS]   = {   0,   5,  10,  20,  30,  50 };
 const uint16_t show_ms[NUM_LEVELS] = { 400, 300, 250, 200, 150, 100 };
 const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 150, 100,  50,  30 };
 
@@ -27,7 +27,7 @@ const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
 #define BUTTON_PORT PORTD
 #define BUTTON_DDR  DDRD
 #define BUTTON_PIN  PIND
-const uint8_t buttons[NUM_BUTTONS] = { 7, 6, 5, 4 };
+const uint8_t buttons[NUM_BUTTONS] = { 4, 5, 6, 7 };
 
 const uint16_t button_notes[NUM_BUTTONS] = { NOTE_E7, NOTE_C7, NOTE_F4, NOTE_D6 };
 
@@ -148,7 +148,7 @@ uint8_t play_game(int seed)
     uint16_t curr_wait_ms = 0;
     for (size_t i = 0; i < HIGHEST_SCORE; i++)
     {
-        if (levels[next_lvl] == i)
+        if (next_lvl < NUM_LEVELS && levels[next_lvl] == i)
         {
             next_lvl++;
             curr_show_ms = show_ms[next_lvl - 1];
@@ -221,8 +221,6 @@ uint8_t play_game(int seed)
 
 int main()
 {
-
-
     display_init();
     buzzer_init();
 
@@ -232,7 +230,7 @@ int main()
     leds_init(led_mask);
 
     // Erase highscore if both outer buttons are pressed on startup
-    if (((BUTTON_PIN & button_mask) >> buttons[NUM_BUTTONS - 1]) == 0b0110)
+    if (((BUTTON_PIN & button_mask) >> buttons[0]) == 0b0110)
     {
         play_freq(440);
         _delay_ms(2000);
