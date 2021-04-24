@@ -30,10 +30,12 @@ SRCS := $(shell find $(SRC_DIRS) -name "*.c" -o -name "*.S")
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
+.PHONY: clean flash debug all
+
 all: $(BUILD_DIR)/$(TARGET_ELF)
 	avr-size --mcu=$(MCU_GCC) -C $(BUILD_DIR)/$(TARGET_ELF)
 
-flash: $(BUILD_DIR)/$(TARGET_ELF)
+flash: all
 	avr-objcopy -O ihex $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(PROJ).hex
 	avrdude -v -p $(MCU_AVRDUDE) -c arduino -P $(USB_DEVICE) -b $(FLASH_BAUDRATE) -D -U flash:w:$(BUILD_DIR)/$(PROJ).hex:i
 
@@ -54,7 +56,6 @@ $(BUILD_DIR)/%.S.o: %.S
 	@echo Compiling $<
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY: clean
 clean:
 	$(RM) -r ./bin
 

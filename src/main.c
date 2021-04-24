@@ -233,8 +233,12 @@ int main()
     if (((BUTTON_PIN & button_mask) >> buttons[0]) == 0b0110)
     {
         play_freq(440);
+        display_send(0);
+        display_send(0);
+        display_show();
         _delay_ms(2000);
         silent();
+        display_clear();
         if (is_input())
         {
             eeprom_write_byte(HIGHSCORE_ADDR, 0);
