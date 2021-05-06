@@ -1,4 +1,3 @@
-#define F_CPU 16000000L
 #include <stdint.h>
 #include <stdlib.h>
 #include <avr/io.h>

@@ -1,4 +1,3 @@
-#define F_CPU 16000000L
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
