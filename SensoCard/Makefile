@@ -1,0 +1,61 @@
+PROJ        := SensoCard
+TARGET_ELF  := $(PROJ).elf
+BUILD_DIR   := ./bin
+SRC_DIRS    := ./src
+
+FLASH_BAUDRATE := 19200
+
+MCU_GCC        := attiny84a
+USB_DEVICE     := /dev/ttyUSB1
+
+INC         := /usr/avr/include
+
+CC          := avr-gcc
+LDFLAGS     :=
+CFLAGS      := \
+	-DF_CPU=1000000 \
+	-O3 \
+	-MMD \
+	-MP \
+	-std=gnu99 \
+	$(addprefix -I,$(INC)) \
+	-mmcu=$(MCU_GCC) \
+	-Wall \
+	-Wextra \
+	-Werror
+
+SRCS := $(shell find $(SRC_DIRS) -name "*.c" -o -name "*.S")
+
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
+
+.PHONY: clean flash debug all
+
+all: $(BUILD_DIR)/$(TARGET_ELF)
+	avr-size --mcu=$(MCU_GCC) -C $(BUILD_DIR)/$(TARGET_ELF)
+
+flash: all
+	avr-objcopy -O ihex $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(PROJ).hex
+	avrdude -p t84 -P $(USB_DEVICE) -c avrisp -b $(FLASH_BAUDRATE) -U flash:w:$(BUILD_DIR)/$(PROJ).hex
+
+debug: flash
+	python ../Logger.py $(USB_DEVICE) $(LOG_BAUDRATE)
+
+$(BUILD_DIR)/$(TARGET_ELF): $(OBJS)
+	@$(CC) -mmcu=$(MCU_GCC) $(OBJS) -o $@ $(LDFLAGS)
+	@echo Done. Placed elf at $(BUILD_DIR)/$(TARGET_ELF)
+
+$(BUILD_DIR)/%.c.o: %.c
+	@mkdir -p $(dir $@)
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.S.o: %.S
+	@mkdir -p $(dir $@)
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	$(RM) -r ./bin
+
+-include $(DEPS)
