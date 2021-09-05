@@ -5,6 +5,7 @@ SRC_DIRS    := ./src
 
 FLASH_BAUDRATE := 115200
 LOG_BAUDRATE   := 500000
+F_CPU          := 16000000L
 
 MCU_AVRDUDE    := m328p
 MCU_GCC        := atmega328p
@@ -19,6 +20,7 @@ CFLAGS      := \
 	-MMD \
 	-MP \
 	-std=gnu99 \
+	-DF_CPU=$(F_CPU) \
 	$(addprefix -I,$(INC)) \
 	-mmcu=$(MCU_GCC) \
 	-Wall \
@@ -29,8 +31,6 @@ SRCS := $(shell find $(SRC_DIRS) -name "*.c" -o -name "*.S")
 
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
-
-.PHONY: clean flash debug all
 
 all: $(BUILD_DIR)/$(TARGET_ELF)
 	avr-size --mcu=$(MCU_GCC) -C $(BUILD_DIR)/$(TARGET_ELF)
@@ -56,6 +56,7 @@ $(BUILD_DIR)/%.S.o: %.S
 	@echo Compiling $<
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+.PHONY: clean
 clean:
 	$(RM) -r ./bin
 
