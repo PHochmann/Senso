@@ -13,4 +13,16 @@ todo
 
 ## SensoCard
 
-todo
+| Part | Quantity |
+| ---- | -------- |
+| ATtiny 84 | 1 |
+| PCB       | 1 |
+| PCB Holder | 1 |
+| 12 x 12mm button | 4 |
+| Colored button caps | 4 |
+| Passive 12mm buzzer | 1 |
+| Colored 5mm LEDs | 4 |
+| SS12D00G3 Switch | 1 |
+| CR2032 Holder | 1 |
+| 100 nF ceramic capacitors | 5 |
+| Resistors | 5 |
