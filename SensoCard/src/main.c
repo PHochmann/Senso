@@ -21,27 +21,36 @@ const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 150, 100,  50,  30 };
 #define LED_PORT    PORTA
 #define LED_DDR     DDRA
 const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
+uint8_t led_mask;
 
 #define BUTTON_PORT PORTA
 #define BUTTON_DDR  DDRA
 #define BUTTON_PIN  PINA
 const uint8_t buttons[NUM_BUTTONS] = { 4, 5, 6, 7 };
+uint8_t button_mask;
 
-const uint16_t button_notes[NUM_BUTTONS] = { NOTE_A4, NOTE_C7, NOTE_F4, NOTE_D6 };
+/* Music */
 
-#define BEGIN_LENGTH 12
-const uint16_t begin_notes[BEGIN_LENGTH] = {
+#define TEMPO (140)
+#define WHOLENOTE ((60000 * 2) / TEMPO)
+
+const uint16_t button_notes[NUM_BUTTONS] = { NOTE_A5, NOTE_A4, NOTE_F4, NOTE_D6 };
+
+const uint16_t begin_notes[] = {
     NOTE_E7, NOTE_E7, 0, NOTE_E7,
     0, NOTE_C7, NOTE_E7, 0,
-    NOTE_G7, 0, 0,  0 };
+    NOTE_G7 };
 
-#define LOSE_LENGTH 10
-const uint16_t lose_notes[LOSE_LENGTH] = {
+const uint16_t lose_notes[] = {
     NOTE_FS4, 0, NOTE_A4, NOTE_CS5, 0, NOTE_A4, 0, NOTE_FS4,
     NOTE_D4, NOTE_D4 };
 
-uint8_t led_mask;
-uint8_t button_mask;
+const uint16_t win_notes[] = {
+    NOTE_E5, 4, NOTE_B4, 8, NOTE_C5, 8, NOTE_D5, 4, NOTE_C5, 8, NOTE_B4, 8,
+    NOTE_A4, 4, NOTE_A4, 8, NOTE_C5, 8, NOTE_E5, 4, NOTE_D5, 8, NOTE_C5, 8,
+    NOTE_B4, -4, NOTE_C5, 8, NOTE_D5, 4, NOTE_E5, 4,
+    NOTE_C5, 4, NOTE_A4, 4, NOTE_A4, 8, NOTE_A4, 4, NOTE_B4, 8, NOTE_C5, 8
+};
 
 uint8_t get_input()
 {
@@ -68,7 +77,7 @@ void my_delay(int ms)
     }
 }
 
-void play_tune(const uint16_t *notes, size_t length)
+void play_tune(const uint16_t *notes, size_t length, bool includes_times)
 {
     uint8_t leds = 0b1001;
     for (size_t i = 0; i < length; i++)
@@ -78,10 +87,32 @@ void play_tune(const uint16_t *notes, size_t length)
             leds = ~leds;
             set_leds(leds);
         }
-        play_freq(notes[i]);
-        _delay_ms(170);
+
+        uint16_t noteDuration;
+        if (includes_times)
+        {
+            int divider = notes[2 * i + 1];
+            noteDuration = 0;
+            if (divider > 0)
+            {
+                noteDuration = WHOLENOTE / divider;
+            }
+            else
+            {
+                noteDuration = WHOLENOTE / abs(divider);
+                noteDuration *= 1.5f;
+            }
+        }
+        else
+        {
+            noteDuration = WHOLENOTE / 4;
+        }
+
+        play_freq(notes[2 * i]);
+        my_delay(noteDuration * 0.9f);
+        silent();
+        my_delay(noteDuration * 0.1f);
     }
-    silent();
     set_leds(0);
     _delay_ms(1500);
 }
@@ -89,16 +120,16 @@ void play_tune(const uint16_t *notes, size_t length)
 /*
 Returns: Achieved score
 */
-uint8_t play_game(int seed)
+uint8_t play_game(unsigned int seed)
 {
-    play_tune(begin_notes, BEGIN_LENGTH);
+    play_tune(begin_notes, sizeof(begin_notes) / sizeof(uint16_t), false);
 
     // Generate random sequence
     srandom(seed);
     uint8_t seq[HIGHEST_SCORE];
     for (size_t i = 0; i < HIGHEST_SCORE; i++)
     {
-        seq[i] = random() % NUM_BUTTONS;
+        seq[i] = (random() >> 16) % NUM_BUTTONS;
     }
 
     // Check for correct presses
@@ -146,7 +177,7 @@ uint8_t play_game(int seed)
                             set_leds(0);
                             silent();
                             _delay_ms(500);
-                            play_tune(lose_notes, LOSE_LENGTH);
+                            play_tune(lose_notes, sizeof(lose_notes) / sizeof(uint16_t), false);
                             return i;
                         }
                         else
@@ -168,11 +199,12 @@ uint8_t play_game(int seed)
 
         // Sequence was correct
         // Wait until all buttons are released
-        while (get_input() != 0);
+        wait_for_no_input();
         _delay_ms(500);
     }
 
     // Game is won!
+    play_tune(win_notes, sizeof(win_notes) / sizeof(uint16_t) / 2, true);
     return HIGHEST_SCORE;
 }
 
@@ -213,12 +245,12 @@ int main()
 
     // Start timer to get random values
     TCCR1A = 0;
-    TCCR1B = (0 << CS02) | (0 << CS01) | (1 << CS00);
+    TCCR1B = (0 << CS12) | (0 << CS11) | (1 << CS10);
 
     uint8_t highscore = eeprom_read_byte(HIGHSCORE_ADDR);
+    set_leds(highscore);
     while (true)
     {
-        set_leds(highscore);
         if (get_input() != 0)
         {
             uint8_t score = play_game(TCNT1);
@@ -227,6 +259,7 @@ int main()
                 highscore = score;
                 eeprom_write_byte(HIGHSCORE_ADDR, highscore);
             }
+            set_leds(highscore);
         }
     }
     
