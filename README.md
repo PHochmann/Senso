@@ -26,4 +26,4 @@ todo
 | CR2032 Holder | 1 |
 | 100 nF ceramic capacitors | 5 |
 | Resistors | 5 |
-| M2 self-tapping screws (<8mm length) | 2 |
+| M2 self-tapping screws (<8mm length) | 4 |
