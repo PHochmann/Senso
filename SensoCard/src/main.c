@@ -77,9 +77,9 @@ void my_delay(int ms)
     }
 }
 
-void play_tune(const uint16_t *notes, size_t length, bool includes_times)
+void play_tune(const uint16_t *notes, size_t length, bool includes_times, uint8_t led_pattern)
 {
-    uint8_t leds = 0b1001;
+    uint8_t leds = led_pattern;
     for (size_t i = 0; i < length; i++)
     {
         if (i % 2 == 0)
@@ -120,17 +120,12 @@ void play_tune(const uint16_t *notes, size_t length, bool includes_times)
 /*
 Returns: Achieved score
 */
-uint8_t play_game(unsigned int seed)
+uint8_t play_game()
 {
-    play_tune(begin_notes, sizeof(begin_notes) / sizeof(uint16_t), false);
+    play_tune(begin_notes, sizeof(begin_notes) / sizeof(uint16_t), false, 0b1001);
 
-    // Generate random sequence
-    srandom(seed);
+    // Random sequence
     uint8_t seq[HIGHEST_SCORE];
-    for (size_t i = 0; i < HIGHEST_SCORE; i++)
-    {
-        seq[i] = (random() >> 16) % NUM_BUTTONS;
-    }
 
     // Check for correct presses
     uint8_t next_lvl = 0;
@@ -138,6 +133,9 @@ uint8_t play_game(unsigned int seed)
     uint16_t curr_wait_ms = 0;
     for (size_t i = 0; i < HIGHEST_SCORE; i++)
     {
+        // Generate next number
+        seq[i] = TCNT1 % NUM_BUTTONS;
+
         if (next_lvl < NUM_LEVELS && levels[next_lvl] == i)
         {
             next_lvl++;
@@ -177,7 +175,7 @@ uint8_t play_game(unsigned int seed)
                             set_leds(0);
                             silent();
                             _delay_ms(500);
-                            play_tune(lose_notes, sizeof(lose_notes) / sizeof(uint16_t), false);
+                            play_tune(lose_notes, sizeof(lose_notes) / sizeof(uint16_t), false, 0b1010);
                             return i;
                         }
                         else
@@ -204,7 +202,7 @@ uint8_t play_game(unsigned int seed)
     }
 
     // Game is won!
-    play_tune(win_notes, sizeof(win_notes) / sizeof(uint16_t) / 2, true);
+    play_tune(win_notes, sizeof(win_notes) / sizeof(uint16_t) / 2, true, 0b1111);
     return HIGHEST_SCORE;
 }
 
@@ -253,7 +251,7 @@ int main()
     {
         if (get_input() != 0)
         {
-            uint8_t score = play_game(TCNT1);
+            uint8_t score = play_game();
             if (score > highscore)
             {
                 highscore = score;

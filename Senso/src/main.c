@@ -213,6 +213,13 @@ uint8_t play_game(int seed)
 
 int main()
 {
+    DDRD = 0xFF;
+    while(true)
+    {
+        PORTD ^= 0xFF;
+        my_delay(1000);
+    }
+
     buttons_init(button_mask);
     leds_init(led_mask);
 

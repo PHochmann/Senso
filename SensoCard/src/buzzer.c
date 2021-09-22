@@ -13,7 +13,7 @@ void play_freq(uint16_t hz)
     TCCR0B = (0 << WGM02) | (0 << CS02) | (1 << CS01) | (1 << CS00); 
     if (hz == 0)
     {
-        silent(0);
+        silent();
     }
     else
     {
