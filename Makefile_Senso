@@ -3,9 +3,10 @@ TARGET_ELF  := $(PROJ).elf
 BUILD_DIR   := ./bin
 SRC_DIRS    := ./src
 
-FLASH_BAUDRATE := 19200
+FLASH_BAUDRATE := 57600
 
-MCU_GCC        := attiny84a
+MCU_GCC        := atmega328p
+MCU_AVRDUDE    := m328p
 USB_DEVICE     := /dev/ttyUSB1
 
 INC         := /usr/avr/include
@@ -13,7 +14,7 @@ INC         := /usr/avr/include
 CC          := avr-gcc
 LDFLAGS     :=
 CFLAGS      := \
-	-DF_CPU=1000000 \
+	-DF_CPU=8000000 \
 	-O3 \
 	-MMD \
 	-MP \
@@ -36,10 +37,7 @@ all: $(BUILD_DIR)/$(TARGET_ELF)
 
 flash: all
 	avr-objcopy -O ihex $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(PROJ).hex
-	avrdude -p t84 -P $(USB_DEVICE) -c avrisp -b $(FLASH_BAUDRATE) -U flash:w:$(BUILD_DIR)/$(PROJ).hex
-
-debug: flash
-	python ../Logger.py $(USB_DEVICE) $(LOG_BAUDRATE)
+	avrdude -v -p $(MCU_AVRDUDE) -P $(USB_DEVICE) -c arduino -b $(FLASH_BAUDRATE) -U flash:w:$(BUILD_DIR)/$(PROJ).hex:i
 
 $(BUILD_DIR)/$(TARGET_ELF): $(OBJS)
 	@$(CC) -mmcu=$(MCU_GCC) $(OBJS) -o $@ $(LDFLAGS)

@@ -1,3 +1,4 @@
+#ifndef SENSOCARD
 #include <stdint.h>
 #include <stdlib.h>
 #include <avr/io.h>
@@ -8,17 +9,17 @@
 #define PRESCALER        1024
 #define TICKS_PER_SECOND (F_CPU / PRESCALER)
 
-void play_freq(uint16_t freq)
+void play_freq(uint16_t hz)
 {
-    if (freq == 0)
+    if (hz == 0)
     {
         OCR2A = 0;
         OCR2B = 0;
     }
     else
     {
-        OCR2A = TICKS_PER_SECOND / freq;
-        OCR2B = TICKS_PER_SECOND / freq / 2;
+        OCR2A = TICKS_PER_SECOND / hz;
+        OCR2B = TICKS_PER_SECOND / hz / 2;
     }
 }
 
@@ -34,3 +35,4 @@ void buzzer_init()
     TCCR2A = (1 << COM2B1) | (1 << WGM21) | (1 << WGM20);   // COM2B1 (output to OC2B) ; WGMode 7 Fast PWM (part 1)
     TCCR2B = (1 << WGM22) | (1 << CS22) | (1 << CS21) | (1 << CS20); 
 }
+#endif

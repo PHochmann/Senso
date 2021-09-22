@@ -1,3 +1,4 @@
+#ifdef SENSOCARD
 #include <stdint.h>
 #include <stdlib.h>
 #include <avr/io.h>
@@ -31,3 +32,4 @@ void buzzer_init()
     BUZZER_DDR |= (1 << BUZZER);
     TCCR0A = (0 << COM0A1) | (1 << COM0A0) | (1 << WGM01) | (0 << WGM00);   // COM2B1 (output to OC2B) ; WGMode 7 Fast PWM (part 1)
 }
+#endif

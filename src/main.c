@@ -7,6 +7,10 @@
 #include <util/delay.h>
 #include <avr/eeprom.h>
 
+#ifndef SENSOCARD
+    #include "display.h"
+#endif
+
 #include "buzzer.h"
 
 #define NUM_BUTTONS    4
@@ -18,15 +22,28 @@ const uint8_t levels[NUM_LEVELS]   = {   0,   5,  10,  20,  30,  50 };
 const uint16_t show_ms[NUM_LEVELS] = { 400, 300, 250, 200, 150, 100 };
 const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 150, 100,  50,  30 };
 
-#define LED_PORT    PORTA
-#define LED_DDR     DDRA
-const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
-uint8_t led_mask;
+#ifdef SENSOCARD
+    #define LED_PORT    PORTA
+    #define LED_DDR     DDRA
+    const uint8_t LEDs[NUM_BUTTONS] = { 0, 1, 2, 3 };
 
-#define BUTTON_PORT PORTA
-#define BUTTON_DDR  DDRA
-#define BUTTON_PIN  PINA
-const uint8_t buttons[NUM_BUTTONS] = { 4, 5, 6, 7 };
+    #define BUTTON_PORT PORTA
+    #define BUTTON_DDR  DDRA
+    #define BUTTON_PIN  PINA
+    const uint8_t buttons[NUM_BUTTONS] = { 4, 5, 6, 7 };
+#else
+    #define LED_PORT    PORT?
+    #define LED_DDR     DDR?
+    const uint8_t LEDs[NUM_BUTTONS] = { ?, ?, ?, ? };
+
+    #define BUTTON_PORT PORT?
+    #define BUTTON_DDR  DDR?
+    #define BUTTON_PIN  PIN?
+    const uint8_t buttons[NUM_BUTTONS] = { ?, ?, ?, ? };
+#endif
+
+
+uint8_t led_mask;
 uint8_t button_mask;
 
 /* Music */
@@ -77,11 +94,32 @@ void my_delay(int ms)
     }
 }
 
+bool delay_and_wait(int ms)
+{
+    while (ms > 0)
+    {  
+        _delay_ms(10);
+        ms -= 10;
+        if (get_input() != 0) return true;
+    }
+    return false;
+}
+
 void play_tune(const uint16_t *notes, size_t length, bool includes_times, uint8_t led_pattern)
 {
+    #ifndef SENSOCARD
+    uint16_t display = 1;
+    #endif
+
     uint8_t leds = led_pattern;
     for (size_t i = 0; i < length; i++)
     {
+        #ifndef SENSOCARD
+        display_send(~display);
+        display_send(~display);
+        display_show();
+        #endif
+
         if (i % 2 == 0)
         {
             leds = ~leds;
@@ -114,6 +152,9 @@ void play_tune(const uint16_t *notes, size_t length, bool includes_times, uint8_
         my_delay(noteDuration * 0.1f);
     }
     set_leds(0);
+    #ifndef SENSOCARD
+    display_clear();
+    #endif
     _delay_ms(1500);
 }
 
@@ -123,6 +164,11 @@ Returns: Achieved score
 uint8_t play_game()
 {
     play_tune(begin_notes, sizeof(begin_notes) / sizeof(uint16_t), false, 0b1001);
+
+    #ifndef SENSOCARD
+    // Initialise score
+    display_show_number(0);
+    #endif
 
     // Random sequence
     uint8_t seq[HIGHEST_SCORE];
@@ -196,6 +242,10 @@ uint8_t play_game()
         }
 
         // Sequence was correct
+        #ifndef SENSOCARD
+        // Show score
+        display_show_number(i + 1);
+        #endif
         // Wait until all buttons are released
         wait_for_no_input();
         _delay_ms(500);
@@ -246,18 +296,35 @@ int main()
     TCCR1B = (0 << CS12) | (0 << CS11) | (1 << CS10);
 
     uint8_t highscore = eeprom_read_byte(HIGHSCORE_ADDR);
-    set_leds(highscore);
+
     while (true)
     {
-        if (get_input() != 0)
+        bool start = false;
+        
+        #ifdef SENSOCARD
+            set_leds(highscore);
+        #else
+            display_show_number(highscore);
+        #endif
+
+        start |= delay_and_wait(500);
+
+        #ifdef SENSOCARD
+            set_leds(0);
+        #else
+            display_clear();
+        #endif
+
+        start |= delay_and_wait(500);
+
+        if (start)
         {
-            uint8_t score = play_game();
+            uint8_t score = play_game(TCNT0);
             if (score > highscore)
             {
                 highscore = score;
                 eeprom_write_byte(HIGHSCORE_ADDR, highscore);
             }
-            set_leds(highscore);
         }
     }
     
