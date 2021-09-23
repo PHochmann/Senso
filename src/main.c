@@ -13,14 +13,16 @@
 
 #include "buzzer.h"
 
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
+
 #define NUM_BUTTONS    4
 #define HIGHEST_SCORE 25
 #define HIGHSCORE_ADDR ((uint8_t*)10)
 
-#define NUM_LEVELS 6
-const uint8_t levels[NUM_LEVELS]   = {   0,   5,  10,  20,  30,  50 };
-const uint16_t show_ms[NUM_LEVELS] = { 400, 300, 250, 200, 150, 100 };
-const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 150, 100,  50,  30 };
+#define NUM_LEVELS 5
+const uint8_t levels[NUM_LEVELS]   = {   0,   4,   8,  15,  20 };
+const uint16_t show_ms[NUM_LEVELS] = { 400, 300, 250, 200, 150 };
+const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 200, 150, 100 };
 
 #ifdef SENSOCARD
     #define LED_PORT    PORTA
@@ -302,7 +304,7 @@ int main()
         bool start = false;
         
         #ifdef SENSOCARD
-            set_leds(highscore);
+            set_leds(MIN(pow(2, NUM_BUTTONS) - 1, highscore));
         #else
             display_show_number(highscore);
         #endif
