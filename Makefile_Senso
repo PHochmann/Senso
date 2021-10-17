@@ -1,4 +1,4 @@
-PROJ        := SensoCard
+PROJ        := Senso
 TARGET_ELF  := $(PROJ).elf
 BUILD_DIR   := ./bin
 SRC_DIRS    := ./src
@@ -7,7 +7,7 @@ FLASH_BAUDRATE := 57600
 
 MCU_GCC        := atmega328p
 MCU_AVRDUDE    := m328p
-USB_DEVICE     := /dev/ttyUSB1
+USB_DEVICE     := /dev/ttyUSB0
 
 INC         := /usr/avr/include
 

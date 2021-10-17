@@ -34,14 +34,14 @@ const uint16_t wait_ms[NUM_LEVELS] = { 300, 250, 200, 150, 100 };
     #define BUTTON_PIN  PINA
     const uint8_t buttons[NUM_BUTTONS] = { 4, 5, 6, 7 };
 #else
-    #define LED_PORT    PORT?
-    #define LED_DDR     DDR?
-    const uint8_t LEDs[NUM_BUTTONS] = { ?, ?, ?, ? };
+    #define LED_PORT    PORTC
+    #define LED_DDR     DDRC
+    const uint8_t LEDs[NUM_BUTTONS] = { 2, 3, 4, 5 };
 
-    #define BUTTON_PORT PORT?
-    #define BUTTON_DDR  DDR?
-    #define BUTTON_PIN  PIN?
-    const uint8_t buttons[NUM_BUTTONS] = { ?, ?, ?, ? };
+    #define BUTTON_PORT PORTB
+    #define BUTTON_DDR  DDRB
+    #define BUTTON_PIN  PINB
+    const uint8_t buttons[NUM_BUTTONS] = { 2, 3, 4, 5 };
 #endif
 
 
@@ -83,7 +83,6 @@ void wait_for_no_input()
 
 void set_leds(uint8_t states)
 {
-    states &= led_mask;
     LED_PORT = (LED_PORT & ~led_mask) | (~states << LEDs[0]);
 }
 
@@ -120,6 +119,7 @@ void play_tune(const uint16_t *notes, size_t length, bool includes_times, uint8_
         display_send(~display);
         display_send(~display);
         display_show();
+        display <<= 1;
         #endif
 
         if (i % 2 == 0)
@@ -281,11 +281,16 @@ int main()
     buttons_init();
     leds_init();
     buzzer_init();
+    #ifndef SENSOCARD
+    display_init();
+    #endif
 
     set_leds(0b1111);
     play_freq(640);
+
     _delay_ms(500);
     silent();
+    set_leds(0);
 
     if (get_input() == 0b1001)
     {

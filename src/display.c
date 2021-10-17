@@ -3,8 +3,8 @@
 #include <avr/io.h>
 #include "display.h"
 
-#define DISPLAY_DDR  DDRB
-#define DISPLAY_PORT PORTB
+#define DISPLAY_DDR  DDRD
+#define DISPLAY_PORT PORTD
 #define DIN_PIN      2
 #define CLK_PIN      3
 #define LE_PIN       4
