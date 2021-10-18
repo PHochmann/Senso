@@ -5,9 +5,9 @@
 
 #define DISPLAY_DDR  DDRD
 #define DISPLAY_PORT PORTD
-#define DIN_PIN      2
+#define DIN_PIN      4
 #define CLK_PIN      3
-#define LE_PIN       4
+#define LE_PIN       2
 
 const uint8_t display_lookup[10] = {
     0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90

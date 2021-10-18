@@ -15,7 +15,7 @@ todo
 
 | Part | Quantity |
 | ---- | -------- |
-| ATtiny 84 | 1 |
+| ATtiny 84 (DIP) | 1 |
 | PCB       | 1 |
 | PCB Holder | 1 |
 | 12 x 12mm button | 4 |
