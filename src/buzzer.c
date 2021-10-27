@@ -4,6 +4,19 @@
 #include "buzzer.h"
 
 #ifdef SENSOCARD
+    #define PRESCALER        64
+#else
+    #define PRESCALER        256 // Higher clock speed causes overflow with lower prescalers
+#endif
+
+#define TICKS_PER_SECOND (F_CPU / PRESCALER)
+
+#define LOWEST_FREQ (TICKS_PER_SECOND / 255)
+#if NOTE_D4 < LOWEST_FREQ
+    #error "Buzzer can't output low frequency. Adjust prescaler."
+#endif
+
+#ifdef SENSOCARD
     #define BUZZER_DDR       DDRB
     #define BUZZER           2
 #else
@@ -11,19 +24,20 @@
     #define BUZZER           6
 #endif
 
-
-#define PRESCALER        64
-#define TICKS_PER_SECOND (F_CPU / PRESCALER)
-
 void play_freq(uint16_t hz)
 {
-    TCCR0B = (0 << WGM02) | (0 << CS02) | (1 << CS01) | (1 << CS00); 
     if (hz == 0)
     {
         silent();
     }
     else
     {
+        #ifdef SENSOCARD
+            TCCR0B = (0 << WGM02) | (0 << CS02) | (1 << CS01) | (1 << CS00); // 64
+        #else
+            TCCR0B = (0 << WGM02) | (1 << CS02) | (0 << CS01) | (0 << CS00); // 256
+        #endif
+
         OCR0A = TICKS_PER_SECOND / hz;
     }
 }

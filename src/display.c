@@ -1,3 +1,4 @@
+#ifndef SENSOCARD
 #include <stddef.h>
 #include <stdint.h>
 #include <avr/io.h>
@@ -53,3 +54,4 @@ void display_clear()
     display_send(0xFF);
     display_show();
 }
+#endif

@@ -7,7 +7,7 @@ FLASH_BAUDRATE := 19200
 
 MCU_GCC        := attiny84a
 MCU_AVRDUDE    := t84
-USB_DEVICE     := /dev/ttyUSB0
+USB_DEVICE     := /dev/ttyUSB1
 
 INC         := /usr/avr/include
 
