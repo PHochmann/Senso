@@ -20,7 +20,7 @@ Todo: screws are missing
 | 9V compartment | 1 | |
 | 100 nF ceramic capacitors | 7 | |
 | 330R resistor | 1 | For buzzer |
-| 100K resistor | 1 | For reset line |
+| 100K resistor | 1 | Pullup for reset line |
 | 6 x 6mm button | 1 | Reset button |
 | M3 self-tapping screws (<8mm length) | 4 | To screw PCB to enclosure |
 | lm2596 module | 1 | |
