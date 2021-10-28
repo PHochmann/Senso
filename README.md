@@ -8,8 +8,26 @@ The latter is a EC-card sized implementation, driven by a button cell with butto
 # Parts list
 
 ## Senso
+Todo: screws are missing
+| Part | Quantity | Description |
+| ---- | -------- | ----------- |
+| ATmega 328p (DIP) | 1 | |
+| PCB       | 1 | |
+| PCB Enclosure | 1 | 3D printed from two parts |
+| 5V Arcade Buttons | 4 | 12V available from AliExpress, resistors need to be switched
+| Passive 12mm buzzer | 1 |
+| Switch, 6mm | 1 | On/Off |
+| 9V compartment | 1 | |
+| 100 nF ceramic capacitors | 7 | |
+| 330R resistor | 1 | For buzzer |
+| 100K resistor | 1 | Pullup for reset line |
+| 6 x 6mm button | 1 | Reset button |
+| M3 self-tapping screws (<8mm length) | 4 | To screw PCB to enclosure |
+| lm2596 module | 1 | |
+| 5P jst xh 2.54, female + male | 3 | |
+| 2P jst xh 2.54, female + male | 3 | |
+| 6P Pinheader, female | 3 | For programming |
 
-todo
 
 ## SensoCard
 
