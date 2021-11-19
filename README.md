@@ -14,7 +14,7 @@ Todo: screws are missing
 | ATmega 328p (DIP) | 1 | |
 | PCB       | 1 | |
 | PCB Enclosure | 1 | 3D printed from two parts |
-| 5V Arcade Buttons | 4 | 12V available from AliExpress, resistors need to be switched
+| 5V Arcade Buttons | 4 | 12V available from AliExpress, resistors need to be changed |
 | Passive 12mm buzzer | 1 |
 | Switch, 6mm | 1 | On/Off |
 | 9V compartment | 1 | |
