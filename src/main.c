@@ -282,7 +282,7 @@ int main()
     leds_init();
     buzzer_init();
     #ifndef SENSOCARD
-    display_init();
+        display_init();
     #endif
 
     set_leds(0b1111);
@@ -298,7 +298,7 @@ int main()
         wait_for_no_input();
     }
 
-    // Start timer to get random values
+    // Start timer to get random values, no prescaler
     TCCR1A = 0;
     TCCR1B = (0 << CS12) | (0 << CS11) | (1 << CS10);
 
@@ -326,7 +326,7 @@ int main()
 
         if (start)
         {
-            uint8_t score = play_game(TCNT0);
+            uint8_t score = play_game();
             if (score > highscore)
             {
                 highscore = score;
