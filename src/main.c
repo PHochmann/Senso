@@ -29,7 +29,12 @@ int main()
     // Power reduction, disable USI and ADC
     ADCSRA &= ~(1 << ADEN);
     ACSR |= 1 << ACD;
-    PRR &= ~(1 << PRUSI | 1 << PRADC);
+
+    #ifdef SENSOCARD
+        PRR |= 1 << PRTIM0 | 1 << PRUSI | 1 << PRADC;
+    #else
+        PRR |= 1 << PRTWI | 1 << PRTIM2 | 1 << PRTIM0 | 1 << PRSPI | 1 << PRUSART0 | 1 << PRADC;
+    #endif
 
     // Initialize registers and external hardware
     buttons_init();
@@ -54,13 +59,22 @@ int main()
     }
 
     uint8_t highscore = read_highscore();
-
+    #ifdef SENSOCARD
+        uint8_t mask = 0b0001;
+    #endif
     while (true)
     {
         bool start = false;
         
         #ifdef SENSOCARD
-            set_leds(MIN(pow(2, NUM_BUTTONS) - 1, highscore));
+            if (highscore != 0 && highscore < 16)
+            {
+                set_leds(MIN(pow(2, NUM_BUTTONS) - 1, highscore));
+            }
+            else
+            {
+                set_leds(mask);
+            }
         #else
             display_show_number(highscore);
         #endif
@@ -68,7 +82,21 @@ int main()
         start |= delay_and_wait(500);
 
         #ifdef SENSOCARD
-            set_leds(0);
+            if (highscore != 0 && highscore < 16)
+            {
+                set_leds(0);
+            }
+            else
+            {
+                if (highscore == 0)
+                {
+                    mask = (mask << 1) | ((mask & 0b1000) >> 3);
+                }
+                else
+                {
+                    mask = (mask >> 1) | ((mask & 0b0001) << 3);
+                }
+            }
         #else
             display_clear();
         #endif

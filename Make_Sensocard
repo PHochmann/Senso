@@ -1,13 +1,13 @@
 PROJ        := SensoCard
 TARGET_ELF  := $(PROJ).elf
-BUILD_DIR   := ./bin
+BUILD_DIR   := ./bin/$(PROJ)
 SRC_DIRS    := ./src
 
 FLASH_BAUDRATE := 19200
 
 MCU_GCC        := attiny84a
 MCU_AVRDUDE    := t84
-USB_DEVICE     := /dev/ttyUSB1
+USB_DEVICE     := /dev/ttyUSB0
 
 INC         := /usr/avr/include
 

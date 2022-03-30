@@ -16,8 +16,8 @@
 #endif
 
 uint8_t button_mask;
-
 uint8_t timer_capture;
+
 ISR (PCINT0_vect)
 {
     timer_capture = TCNT1;
@@ -38,7 +38,12 @@ void buttons_init()
 
     // Speciality: Button presses are used to get random values
     // Enable pin state change interrupt for button pins
-    GIMSK = 1 << PCIE0;
+    #ifdef SENSOCARD
+        GIMSK = 1 << PCIE0;
+    #else
+        PCICR = 1 << PCIE0;
+    #endif
+    
     PCMSK0 = (1 << PCINT7 | 1 << PCINT6 | 1 << PCINT5 | 1 << PCINT4);
     sei();
     // Start timer to get random values, no prescaler

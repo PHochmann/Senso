@@ -62,7 +62,7 @@ void play_tune(const uint16_t *notes, size_t length, uint8_t led_pattern)
             set_leds(leds);
         }
 
-        play_freq(notes[2 * i]);
+        play_freq(notes[i]);
         my_delay(NOTE_DURATION * 0.9f);
         silent();
         my_delay(NOTE_DURATION * 0.1f);
@@ -96,7 +96,7 @@ void play_game()
     for (size_t i = 0; i < HIGHEST_SCORE; i++)
     {
         // Generate next number
-        seq[i] = (get_timer_capture() + i) % NUM_BUTTONS;
+        seq[i] = (get_timer_capture() / 7 + i) % NUM_BUTTONS;
 
         if (next_lvl < NUM_LEVELS && levels[next_lvl] == i)
         {

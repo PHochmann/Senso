@@ -1,6 +1,6 @@
 PROJ        := Senso
 TARGET_ELF  := $(PROJ).elf
-BUILD_DIR   := ./bin
+BUILD_DIR   := ./bin/$(PROJ)
 SRC_DIRS    := ./src
 
 FLASH_BAUDRATE := 57600
