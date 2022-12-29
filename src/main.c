@@ -19,7 +19,10 @@ bool delay_and_wait(int ms)
     {  
         _delay_ms(10);
         ms -= 10;
-        if (get_input() != 0) return true;
+        if (is_any_key_pressed())
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -27,9 +30,9 @@ bool delay_and_wait(int ms)
 int main()
 {
     // Power reduction, disable USI and ADC
-    ADCSRA &= ~(1 << ADEN);
-    ACSR |= 1 << ACD;
-    PRR &= ~(1 << PRUSI | 1 << PRADC);
+    //ADCSRA &= ~(1 << ADEN);
+    //ACSR |= 1 << ACD;
+    //PRR &= ~(1 << PRUSI | 1 << PRADC);
 
     // Initialize registers and external hardware
     buttons_init();
@@ -47,7 +50,7 @@ int main()
     set_leds(0);
 
     // Erase highscore if secret combination is pressed on startup
-    if (get_input() == 0b1001)
+    if (is_pressed(0) && is_pressed(3))
     {
         clear_highscore();
         wait_for_no_input();

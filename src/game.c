@@ -126,7 +126,7 @@ void play_game()
                 for (size_t k = 0; k < NUM_BUTTONS; k++)
                 {
                     // Check if button is pressed
-                    if ((get_input() & (1 << k)) != 0)
+                    if (is_pressed(k))
                     {
                         if (k != seq[j])
                         {

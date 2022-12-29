@@ -3,10 +3,10 @@ TARGET_ELF  := $(PROJ).elf
 BUILD_DIR   := ./bin
 SRC_DIRS    := ./src
 
-FLASH_BAUDRATE := 19200
+FLASH_BAUDRATE := 115200
 
 MCU_GCC        := attiny84a
-MCU_AVRDUDE    := t84
+MCU_AVRDUDE    := t84a
 USB_DEVICE     := /dev/ttyUSB1
 
 INC         := /usr/avr/include
@@ -38,7 +38,7 @@ all: $(BUILD_DIR)/$(TARGET_ELF)
 
 flash: all
 	avr-objcopy -O ihex $(BUILD_DIR)/$(TARGET_ELF) $(BUILD_DIR)/$(PROJ).hex
-	avrdude -p $(MCU_AVRDUDE) -P $(USB_DEVICE) -c avrisp -b $(FLASH_BAUDRATE) -U flash:w:$(BUILD_DIR)/$(PROJ).hex
+	avrdude -p $(MCU_AVRDUDE) -P $(USB_DEVICE) -c stk500v1 -b $(FLASH_BAUDRATE) -U flash:w:$(BUILD_DIR)/$(PROJ).hex -F
 
 $(BUILD_DIR)/$(TARGET_ELF): $(OBJS)
 	@$(CC) -mmcu=$(MCU_GCC) $(OBJS) -o $@ $(LDFLAGS)
